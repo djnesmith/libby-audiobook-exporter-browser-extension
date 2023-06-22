@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Libby Audiobook Exporter",
+  "version": "1.0.1",
+  "description": "A browser extension which can save Libby audiobooks to your local drive.",
+  "icons": {
+    "16": "images/icon16.png",
+    "32": "images/icon32.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
+  "background": {
+    "service_worker": "scripts/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "scripts/content.js"
+      ],
+      "css": [
+        "css/content.css"
+      ],
+      "run_at": "document_end",
+      "matches": [
+        "*://*.libbyapp.com/open/loan/*"
+      ]
+    }
+  ],
+  "permissions": [
+    "webRequest",
+    "downloads"
+  ],
+  "host_permissions": [
+    "*://*.libbyapp.com/*"
+  ]
+}

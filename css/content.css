@@ -1,0 +1,38 @@
+#lae-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#lae-button-container {
+    display: flex;
+    flex-direction: row ;
+    justify-content: space-evenly;
+}
+
+#lae-export-button {
+    text-align: center;
+    font-weight: bolder;
+    border: 2px solid green;
+}
+
+#lae-toggle-list-button {
+    text-align: center;
+    border: 2px solid
+}
+
+#lae-download-list {
+    text-align: center;
+    border: 2px dotted;
+}
+
+.lae-banner {
+    color: lightblue;
+}
+
+.lae-banner::before {
+    content: " \2190 ";
+}
+
+.lae-banner::after {
+    content: " \2192 ";
+}

@@ -1,0 +1,19 @@
+{
+  "name": "libby-audiobook-exporter-browser-extension",
+  "version": "1.0.0",
+  "description": "Libby Audiobook Exporter",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "libby",
+    "audiobook",
+    "exporter"
+  ],
+  "author": "HOU Tianze",
+  "license": "ISC",
+  "devDependencies": {
+    "chrome-types": "^0.1.206"
+  }
+}
