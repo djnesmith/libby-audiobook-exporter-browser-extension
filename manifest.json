@@ -32,5 +32,6 @@
   ],
   "host_permissions": [
     "*://*.libbyapp.com/*"
-  ]
+  ],
+  "homepage_url": "https://github.com/houtianze/libby-audiobook-exporter-browser-extension"
 }
