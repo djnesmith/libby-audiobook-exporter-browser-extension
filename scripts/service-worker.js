@@ -24,7 +24,7 @@ async function possessionCallback(details) {
     }
 }
 
-const coverFilter = { urls: ["*://libbyapp.com/covers/resize?*.JPG"] }
+const coverFilter = { urls: ["*://libbyapp.com/covers/resize?*"] }
 async function coverCallback(details) {
     const coverUrl = details.url
     downloadMap[coverUrl] = 'cover.' + (coverUrl?.split('.')?.pop()?.toLowerCase() ?? "jpg")

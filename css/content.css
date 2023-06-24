@@ -12,11 +12,15 @@
 #lae-export-button {
     text-align: center;
     font-weight: bolder;
+    padding-left: 4px;
+    padding-right: 4px;
     border: 2px solid green;
 }
 
 #lae-toggle-list-button {
     text-align: center;
+    padding-left: 4px;
+    padding-right: 4px;
     border: 2px solid
 }
 
@@ -35,4 +39,14 @@
 
 .lae-banner::after {
     content: " \2192 ";
+}
+
+#lae-progress-bar {
+    width: 60%;
+    border: 1px solid;
+}
+
+#lae-progress {
+    white-space: nowrap;
+    text-align: center;
 }

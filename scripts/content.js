@@ -6,6 +6,10 @@ const LAE_CONTAINER_ID = "lae-container"
 const EXPORT_BUTTON_ID = "lae-export-button"
 const TOGGLE_LIST_BUTTON_ID = "lae-toggle-list-button"
 const DOWNLOAD_LIST_ID = "lae-download-list"
+const PROGRESS_BAR_ID = "lae-progress-bar"
+const PROGRESS_ID = "lae-progress"
+
+const bannerText = "\u2190 to download | toggle download list \u2192";
 
 const delayMs = ms => new Promise(res => setTimeout(res, ms));
 
@@ -29,6 +33,9 @@ function createDownloadList() {
 }
 
 async function exportAudio() {
+    const total = Object.keys(downloadMap).length;
+    let current = 0;
+    const progress = document.getElementById(PROGRESS_ID);
     for await (const url of Object.keys(downloadMap)) {
         const filename = downloadMap[url];
         console.log(`[lae] downloading ${url} as ${filename}`)
@@ -37,8 +44,20 @@ async function exportAudio() {
             url: url,
             filename: filename,
         })
+        current++;
+        progress.style.backgroundColor = "lightgreen";
+        progress.style.width = `${current * 100 / total}%`;
+        progress.textContent = `${current} / ${total}`;
         await delayMs(5000);
     }
+
+    // restore the progress bar
+    progress.width = "100%";
+    progress.style.backgroundColor = "lightblue";
+    progress.textContent = "All done!";
+    await delayMs(5000);
+    progress.style.backgroundColor = "";
+    progress.textContent = bannerText;
     console.log(`[lae] all files are downloaded.`)
 }
 
@@ -56,11 +75,13 @@ function attachElements() {
     <div id="lae-button-container" class="nav-action-bar">
         <button id="${EXPORT_BUTTON_ID}"
             class="nav-action-item"
-        >Export Audio</button>
-        <div class="lae-banner">Export</div>
+        >Export</button>
+        <div id="${PROGRESS_BAR_ID}">
+            <div id="${PROGRESS_ID}">${bannerText}</div>
+        </div>
         <button id="${TOGGLE_LIST_BUTTON_ID}"
             class="nav-action-item"
-        >Show Download List</button>
+        >List</button>
     </div>
     <div id="${DOWNLOAD_LIST_ID}"></div>
     `
@@ -89,11 +110,3 @@ function attachElements() {
     }
     attachElements();
 })();
-
-// chrome.runtime.onMessage.addListener(
-//     (message, sender, sendResponse) => {
-//         downloadMap = message?.downloadMap;
-//         attachElements();
-//     }
-// );
-
