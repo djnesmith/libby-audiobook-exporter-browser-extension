@@ -12,21 +12,25 @@
 #lae-export-button {
     text-align: center;
     font-weight: bolder;
-    padding-left: 4px;
-    padding-right: 4px;
+    padding-left: 4rem;
+    padding-right: 4rem;
     border: 2px solid green;
 }
 
 #lae-toggle-list-button {
     text-align: center;
-    padding-left: 4px;
-    padding-right: 4px;
+    padding-left: 4rem;
+    padding-right: 4rem;
     border: 2px solid
 }
 
 #lae-download-list {
+    overflow: auto;
+    overflow-x: auto;
+    overflow-y: auto;
     text-align: center;
     border: 2px dotted;
+    height: 90vh;
 }
 
 .lae-banner {
