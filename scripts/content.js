@@ -1,5 +1,7 @@
 // globals
-let downloadMap = {}
+const titleId = getTailAfter(window.location.pathname, '/')
+let book
+let downloadMap
 
 // const
 const LAE_CONTAINER_ID = "lae-container"
@@ -19,25 +21,44 @@ const Crimson = "#dc143c";
 
 const delayMs = ms => new Promise(res => setTimeout(res, ms));
 const delayMsWithRatio = async (ms, ratio) => await delayMs(ms * (1 - ratio + 2 * ratio * Math.random()));
-const delayRoughlyMs = async (ms) => await delayMs(ms, 0.5)
+const delayRoughlyMs = async (ms) => await delayMsWithRatio(ms, 0.4)
 
-function createDownloadList() {
+function refreshDownloadList() {
+    const meta = {}
+    if (book?.openbookUrl) {
+        meta["openbook.json"] = book.openbookUrl
+    }
+    if (book?.coverUrl) {
+        const coverFilename = `cover.${getTailAfter(book.coverUrl, '.')?.toLowerCase() ?? "jpg"}`
+        meta[coverFilename] = book.coverUrl
+    }
+    downloadMap = {
+        ...meta,
+        ...book?.audios,
+    }
+}
+
+function regenerateDownloadDiv() {
     const theDiv = document.createElement("div")
     theDiv.id = DOWNLOAD_LIST_ID
     const ul = document.createElement("ul")
     theDiv.appendChild(ul)
+    theDiv.style.display = "none"
     Object.keys(downloadMap).forEach(
         key => {
-            const li = document.createElement("li")
-            const a = document.createElement("a")
-            a.textContent = downloadMap[key]
-            a.href = key
-            li.appendChild(a)
-            ul.appendChild(li)
+            createListItem(ul, key, downloadMap[key])
         }
     )
-    theDiv.style.display = "none"
     return theDiv;
+}
+
+function createListItem(ul, text, href) {
+    const li = document.createElement("li")
+    const a = document.createElement("a")
+    a.textContent = text
+    a.href = href
+    li.appendChild(a)
+    ul.appendChild(li)
 }
 
 async function exportAudio() {
@@ -45,13 +66,13 @@ async function exportAudio() {
     let current = 0;
     const progress = document.getElementById(PROGRESS_ID);
     progress.style.backgroundColor = SpringGreen;
-    for await (const url of Object.keys(downloadMap)) {
-        const filename = downloadMap[url];
+    for await (const filename of Object.keys(downloadMap)) {
+        const url = downloadMap[filename];
         console.log(`[lae] downloading ${url} as ${filename}`)
         await chrome.runtime.sendMessage({
             command: 'Download',
             url: url,
-            filename: filename,
+            filename: `${book.downloadDir}/${filename}`,
         })
         current++;
         progress.style.width = `${current * 100 / total}%`;
@@ -107,10 +128,11 @@ function attachElements() {
 }
 
 function attachDownloadList() {
-    const downloadList = createDownloadList();
+    refreshDownloadList();
+    const listDiv = regenerateDownloadDiv();
     const laeDiv = document.getElementById(LAE_CONTAINER_ID);
     // the download list above is regenerated, so we replace dom to update also
-    laeDiv.querySelector(`#${DOWNLOAD_LIST_ID}`).replaceWith(downloadList);
+    laeDiv.querySelector(`#${DOWNLOAD_LIST_ID}`).replaceWith(listDiv);
 }
 
 function getProgressElement() {
@@ -135,6 +157,10 @@ function setFailedBanner() {
     progress.style.backgroundColor = Crimson
 }
 
+function getTailAfter(str, sep) {
+    return str.substring(str.lastIndexOf(sep) + 1)
+}
+
 attachElements();
 setInitialBanner();
 attachDownloadList();
@@ -142,14 +168,13 @@ attachDownloadList();
 (async () => {
     const startMs = Date.now();
     let timeOuted = false;
-    while (Object.keys(downloadMap).length <= 2) { // cover and openbook.json
+    while (!book?.audios) {
         if ((Date.now() - startMs) > 30 * 1000) {
             timeOuted = true;
             break;
         }
-        await delayRoughlyMs(5000);
-        const response = await chrome.runtime.sendMessage({ command: "GetMap" });
-        downloadMap = response?.downloadMap
+        await delayRoughlyMs(1000);
+        book = await chrome.runtime.sendMessage({ command: "GetMap", titleId: titleId });
     }
     attachDownloadList();
     timeOuted ? setFailedBanner() : setReadyBanner();

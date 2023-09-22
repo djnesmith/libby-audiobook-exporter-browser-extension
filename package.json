@@ -14,6 +14,7 @@
   "author": "HOU Tianze",
   "license": "ISC",
   "devDependencies": {
-    "chrome-types": "^0.1.206"
+    "chrome-types": "^0.1.206",
+    "eslint": "^8.49.0"
   }
 }
