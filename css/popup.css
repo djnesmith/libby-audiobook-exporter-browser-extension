@@ -1,0 +1,45 @@
+body {
+    margin: 0 auto;
+}
+
+#lae-container {
+    display: flex;
+    flex-direction: column;
+    width: 100vh;
+    max-height: 100%;
+    max-height: 100%;
+}
+
+#lae-export-button {
+    text-align: center;
+    font-weight: bolder;
+}
+
+#lae-banner {
+    font-size: 2em;
+    font-weight: bold;
+    background-color: lightcyan;
+}
+
+#lae-download-list {
+    text-align: center;
+}
+
+/* https://stackoverflow.com/a/53778525/404271 */
+#lae-download-list ul {
+    display: contents;
+    list-style: none;
+}
+
+#lae-download-list ul li {
+    text-overflow: ellipsis;
+}
+
+#lae-download-list ul li:nth-child(even) {
+    background-color: lightgray;
+}
+
+#lae-status {
+    background-color: lightcyan;
+    text-align: center;
+}

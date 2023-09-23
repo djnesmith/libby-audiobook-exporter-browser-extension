@@ -17,18 +17,19 @@
       "js": [
         "scripts/content.js"
       ],
-      "css": [
-        "css/content.css"
-      ],
-      "run_at": "document_end",
       "matches": [
         "*://*.libbyapp.com/open/loan/*"
       ]
     }
   ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Libby Audiobook Exporter"
+  },
   "permissions": [
     "webRequest",
-    "downloads"
+    "downloads",
+    "activeTab"
   ],
   "host_permissions": [
     "*://*.libbyapp.com/*"
