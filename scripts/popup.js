@@ -61,7 +61,6 @@ function getLiId(text) {
 async function exportAudio() {
     const total = Object.keys(downloadMap).length
     let downloaded = 0
-    showSatus();
     for await (const filename of Object.keys(downloadMap)) {
         const url = downloadMap[filename];
         console.log(`[lae] downloading ${url} as ${filename}`)
@@ -72,15 +71,10 @@ async function exportAudio() {
         })
         document.getElementById(getLiId(filename)).style.backgroundColor = 'lightgreen'
         downloaded++
-        updateStatus(`${downloaded} / ${total}`)
+        updateStatus(`Downloaded: ${downloaded} / ${total}`)
         await delayRoughlyMs(5000);
     }
     console.log(`[lae] all files are downloaded.`)
-}
-
-function showSatus() {
-    const statusDiv = document.getElementById(STATUS_ID)
-    statusDiv.style.display = 'block'
 }
 
 function updateStatus(text) {
@@ -92,7 +86,6 @@ function attachDownloadList() {
     refreshDownloadList();
     const listDiv = regenerateDownloadDiv();
     const laeDiv = document.getElementById(LAE_CONTAINER_ID);
-    // the download list above is regenerated, so we replace dom to update also
     laeDiv.querySelector(`#${DOWNLOAD_LIST_ID}`).replaceWith(listDiv);
 }
 
@@ -105,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const activeTab = await chrome.tabs.query({ active: true, currentWindow: true })
     const titleId = getTailAfter(activeTab[0].url, '/')
     book = await chrome.runtime.sendMessage({ command: "GetMap", titleId: titleId });
+        attachDownloadList();
     if (book?.openbookUrl) {
         attachDownloadList();
     }

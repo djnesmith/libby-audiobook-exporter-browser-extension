@@ -22,5 +22,7 @@ module.exports = {
         "sourceType": "module"
     },
     "rules": {
-    }
+    },
+    // https://stackoverflow.com/a/50513752/404271
+    "webextensions": true
 }
