@@ -6,6 +6,7 @@ let downloadMap
 const LAE_CONTAINER_ID = "lae-container"
 const DOWNLOAD_LIST_ID = "lae-download-list"
 const EXPORT_BUTTON_ID = "lae-export-button"
+const STATUS_ID = "lae-status"
 
 const delayMs = ms => new Promise(res => setTimeout(res, ms));
 const delayMsWithRatio = async (ms, ratio) => await delayMs(ms * (1 - ratio + 2 * ratio * Math.random()));
@@ -58,6 +59,9 @@ function getLiId(text) {
 }
 
 async function exportAudio() {
+    const total = Object.keys(downloadMap).length
+    let downloaded = 0
+    showSatus();
     for await (const filename of Object.keys(downloadMap)) {
         const url = downloadMap[filename];
         console.log(`[lae] downloading ${url} as ${filename}`)
@@ -67,9 +71,21 @@ async function exportAudio() {
             filename: `${book.downloadDir}/${filename}`,
         })
         document.getElementById(getLiId(filename)).style.backgroundColor = 'lightgreen'
+        downloaded++
+        updateStatus(`${downloaded} / ${total}`)
         await delayRoughlyMs(5000);
     }
     console.log(`[lae] all files are downloaded.`)
+}
+
+function showSatus() {
+    const statusDiv = document.getElementById(STATUS_ID)
+    statusDiv.style.display = 'block'
+}
+
+function updateStatus(text) {
+    const statusDiv = document.getElementById(STATUS_ID)
+    statusDiv.innerText = text
 }
 
 function attachDownloadList() {
