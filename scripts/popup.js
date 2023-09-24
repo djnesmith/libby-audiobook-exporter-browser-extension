@@ -1,27 +1,31 @@
-import { getTailAfter } from "./common.js"
+import { Commands, getTailAfter } from "./common.js"
 
 // globals
 let book
 let downloadMap
 
 // const
-const LAE_CONTAINER_ID = "lae-container"
-const DOWNLOAD_LIST_ID = "lae-download-list"
+const LAE_EXPLANATION_BANNER = "lae-explanation-banner"
+const LAE_MAIN_ID = "lae-main"
 const EXPORT_BUTTON_ID = "lae-export-button"
+const DOWNLOAD_LIST_ID = "lae-download-list"
 const STATUS_ID = "lae-status"
 
 const delayMs = ms => new Promise(res => setTimeout(res, ms));
 const delayMsWithRatio = async (ms, ratio) => await delayMs(ms * (1 - ratio + 2 * ratio * Math.random()));
 const delayRoughlyMs = async (ms) => await delayMsWithRatio(ms, 0.4)
 
-const laeDiv = document.getElementById(LAE_CONTAINER_ID);
-const exportButton = document.getElementById(EXPORT_BUTTON_ID);
-const statusDiv = document.getElementById(STATUS_ID)
+const laeExplanationBanner = document.getElementById(LAE_EXPLANATION_BANNER);
+const laeMain = document.getElementById(LAE_MAIN_ID);
+const laeDownloadList = laeMain.querySelector(`#${DOWNLOAD_LIST_ID}`)
+const laeExportButton = document.getElementById(EXPORT_BUTTON_ID);
+const laeStatusDiv = document.getElementById(STATUS_ID)
 
 function attachDownloadList() {
     refreshDownloadList();
     const listDiv = regenerateDownloadDiv();
-    laeDiv.querySelector(`#${DOWNLOAD_LIST_ID}`).replaceWith(listDiv);
+    laeDownloadList.replaceWith(listDiv);
+    laeMain.style.display = 'block';
 }
 
 function refreshDownloadList() {
@@ -59,7 +63,7 @@ async function exportAudio() {
         const url = downloadMap[filename];
         console.log(`[lae] downloading ${url} as ${filename}`)
         await chrome.runtime.sendMessage({
-            command: 'Download',
+            command: Commands.Download,
             url: url,
             filename: `${book.downloadDir}/${filename}`,
         })
@@ -86,19 +90,19 @@ function getLiId(text) {
 }
 
 function updateStatus(text) {
-    statusDiv.innerText = text
+    laeStatusDiv.innerText = text
 }
 
 async function main() {
     document.addEventListener('DOMContentLoaded', function () {
-        exportButton.addEventListener('click', exportAudio);
+        laeExportButton.addEventListener('click', exportAudio);
     });
 
     const activeTab = await chrome.tabs.query({ active: true, currentWindow: true })
     const titleId = getTailAfter(activeTab[0].url, '/')
-    book = await chrome.runtime.sendMessage({ command: "GetMap", titleId: titleId });
-    attachDownloadList();
+    book = await chrome.runtime.sendMessage({ command: Commands.GetMap, titleId: titleId });
     if (book?.openbookUrl) {
+        laeExplanationBanner.style.display = 'none'
         attachDownloadList();
     }
 }

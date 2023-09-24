@@ -1,3 +1,8 @@
+const Commands = {
+    GetMap: 'GetMap',
+    Download: 'Download',
+}
+
 function getTailAfter(str, sep) {
     return str.substring(str.lastIndexOf(sep) + 1)
 }
@@ -25,4 +30,4 @@ function makePathNameSafe(name) {
     return name.replace(/[<>:"/\\|?*]/g, '_');
 }
 
-export { getTailAfter, base64UrlDecode, makePathNameSafe }
+export { Commands, getTailAfter, base64UrlDecode, makePathNameSafe }

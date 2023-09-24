@@ -1,4 +1,4 @@
-import { base64UrlDecode, makePathNameSafe } from "./common.js"
+import { Commands, base64UrlDecode, makePathNameSafe } from './common.js'
 
 // globals
 // { titleId: {
@@ -56,10 +56,10 @@ async function main() {
     chrome.runtime.onMessage.addListener(
         async (message, sender, sendResponse) => {
             switch (message?.command) {
-                case 'GetMap':
+                case Commands.GetMap:
                     sendResponse(books[message?.titleId]);
                     break;
-                case 'Download': {
+                case Commands.Download: {
                     const downloadId = await chrome.downloads.download({
                         url: message?.url,
                         filename: message?.filename,

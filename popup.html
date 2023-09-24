@@ -10,18 +10,21 @@
 
 <body>
     <div id="lae-container">
-        <button id="lae-export-button">Export</button>
-        <div id="lae-download-list">
-            <div id="lae-banner">
-                <p>
+        <div id="lae-explanation-banner">
+            <p>
                 If you are seeing this message instead of a list of files to be downloaded,
                 the page may not have been completely loaded, just wait for the page to be
                 fully loaded and click on the extension to show this popup again.
+            </p>
+            <p>
                 In an unlikely scenario, reload the current webpage (Ctrl/Cmd + R).
-                </p>
-            </div>
+            </p>
         </div>
-        <div id="lae-status"></div>
+        <div id="lae-main">
+            <button id="lae-export-button">Export</button>
+            <div id="lae-download-list"></div>
+            <div id="lae-status"></div>
+        </div>
     </div>
     <script src="scripts/common.js" type="module"></script>
     <script src="scripts/popup.js" type="module"></script>
