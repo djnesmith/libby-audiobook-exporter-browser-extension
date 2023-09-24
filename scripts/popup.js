@@ -1,3 +1,5 @@
+import { getTailAfter } from "./common.js"
+
 // globals
 let book
 let downloadMap
@@ -12,8 +14,14 @@ const delayMs = ms => new Promise(res => setTimeout(res, ms));
 const delayMsWithRatio = async (ms, ratio) => await delayMs(ms * (1 - ratio + 2 * ratio * Math.random()));
 const delayRoughlyMs = async (ms) => await delayMsWithRatio(ms, 0.4)
 
-function getTailAfter(str, sep) {
-    return str.substring(str.lastIndexOf(sep) + 1)
+const laeDiv = document.getElementById(LAE_CONTAINER_ID);
+const exportButton = document.getElementById(EXPORT_BUTTON_ID);
+const statusDiv = document.getElementById(STATUS_ID)
+
+function attachDownloadList() {
+    refreshDownloadList();
+    const listDiv = regenerateDownloadDiv();
+    laeDiv.querySelector(`#${DOWNLOAD_LIST_ID}`).replaceWith(listDiv);
 }
 
 function refreshDownloadList() {
@@ -44,20 +52,6 @@ function regenerateDownloadDiv() {
     return theDiv;
 }
 
-function createListItem(ul, text, href) {
-    const li = document.createElement("li")
-    li.id = getLiId(text)
-    const a = document.createElement("a")
-    a.textContent = text
-    a.href = href
-    li.appendChild(a)
-    ul.appendChild(li)
-}
-
-function getLiId(text) {
-    return `li-${text}`
-}
-
 async function exportAudio() {
     const total = Object.keys(downloadMap).length
     let downloaded = 0
@@ -77,29 +71,36 @@ async function exportAudio() {
     console.log(`[lae] all files are downloaded.`)
 }
 
+function createListItem(ul, text, href) {
+    const li = document.createElement("li")
+    li.id = getLiId(text)
+    const a = document.createElement("a")
+    a.textContent = text
+    a.href = href
+    li.appendChild(a)
+    ul.appendChild(li)
+}
+
+function getLiId(text) {
+    return `li-${text}`
+}
+
 function updateStatus(text) {
-    const statusDiv = document.getElementById(STATUS_ID)
     statusDiv.innerText = text
 }
 
-function attachDownloadList() {
-    refreshDownloadList();
-    const listDiv = regenerateDownloadDiv();
-    const laeDiv = document.getElementById(LAE_CONTAINER_ID);
-    laeDiv.querySelector(`#${DOWNLOAD_LIST_ID}`).replaceWith(listDiv);
-}
+async function main() {
+    document.addEventListener('DOMContentLoaded', function () {
+        exportButton.addEventListener('click', exportAudio);
+    });
 
-document.addEventListener('DOMContentLoaded', function () {
-    const link = document.getElementById(EXPORT_BUTTON_ID);
-    link.addEventListener('click', exportAudio);
-});
-
-(async () => {
     const activeTab = await chrome.tabs.query({ active: true, currentWindow: true })
     const titleId = getTailAfter(activeTab[0].url, '/')
     book = await chrome.runtime.sendMessage({ command: "GetMap", titleId: titleId });
-        attachDownloadList();
+    attachDownloadList();
     if (book?.openbookUrl) {
         attachDownloadList();
     }
-})();
+}
+
+main()

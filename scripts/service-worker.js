@@ -1,3 +1,5 @@
+import { base64UrlDecode, makePathNameSafe } from "./common.js"
+
 // globals
 // { titleId: {
 //    "titleId": titleId,
@@ -11,10 +13,8 @@
 //     }
 //   }
 // }
-
 const books = {}
 
-const iframeFilter = { urls: ["*://*.libbyapp.com/?m=eyJ*"] }
 async function iframeCallback(details) {
     const url = new URL(details.url)
     const baseUrl = url.origin
@@ -49,62 +49,44 @@ async function iframeCallback(details) {
     )
 }
 
-// https://stackoverflow.com/a/51838635/404271
-function base64UrlDecode(s) {
-    // Replace non-url compatible chars with base64 standard chars
-    s = s.replace(/-/g, '+').replace(/_/g, '/');
+async function main() {
+    const iframeFilter = { urls: ["*://*.libbyapp.com/?m=eyJ*"] }
+    chrome.webRequest.onCompleted.addListener(iframeCallback, iframeFilter);
 
-    // Pad out with standard base64 required padding characters
-    var pad = s.length % 4;
-    if (pad) {
-        if (pad === 1) {
-            throw new Error('InvalidLengthError: Input base64url string is the wrong length to determine padding');
-        }
-        s += new Array(5 - pad).join('=');
-    }
-
-    return atob(s);
-}
-
-chrome.webRequest.onCompleted.addListener(iframeCallback, iframeFilter);
-
-// https://stackoverflow.com/a/31976060/404271
-function makePathNameSafe(name) {
-    // return name.replace(/[/<>:"/\\|?*\x00-\x1f]/g, '_');
-    return name.replace(/[<>:"/\\|?*]/g, '_');
-}
-
-chrome.runtime.onMessage.addListener(
-    async (message, sender, sendResponse) => {
-        switch (message?.command) {
-            case 'GetMap':
-                sendResponse(books[message?.titleId]);
-                break;
-            case 'Download': {
-                const downloadId = await chrome.downloads.download({
-                    url: message?.url,
-                    filename: message?.filename,
-                })
-                sendResponse({
-                    downloadId: downloadId,
-                })
-                break;
-            }
-            default: {
-                const error = `Message not understood: ${message}`;
-                sendResponse({
-                    error: error,
-                })
+    chrome.runtime.onMessage.addListener(
+        async (message, sender, sendResponse) => {
+            switch (message?.command) {
+                case 'GetMap':
+                    sendResponse(books[message?.titleId]);
+                    break;
+                case 'Download': {
+                    const downloadId = await chrome.downloads.download({
+                        url: message?.url,
+                        filename: message?.filename,
+                    })
+                    sendResponse({
+                        downloadId: downloadId,
+                    })
+                    break;
+                }
+                default: {
+                    const error = `Message not understood: ${message}`;
+                    sendResponse({
+                        error: error,
+                    })
+                }
             }
         }
-    }
-);
+    );
 
-chrome.runtime.onInstalled.addListener(function (details) {
-    if (details.reason == "install") {
-        console.log("This is a first install!");
-    } else if (details.reason == "update") {
-        var thisVersion = chrome.runtime.getManifest().version;
-        console.log("Updated from " + details.previousVersion + " to " + thisVersion + "!");
-    }
-});
+    chrome.runtime.onInstalled.addListener(function (details) {
+        if (details.reason == "install") {
+            console.log("This is a first install!");
+        } else if (details.reason == "update") {
+            var thisVersion = chrome.runtime.getManifest().version;
+            console.log("Updated from " + details.previousVersion + " to " + thisVersion + "!");
+        }
+    });
+}
+
+main()
