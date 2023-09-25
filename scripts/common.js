@@ -1,6 +1,7 @@
 const Commands = {
-    GetMap: 'GetMap',
+    GetBook: 'GetBook',
     Download: 'Download',
+    UpdateBook: 'UpdateBook'
 }
 
 function getTailAfter(str, sep) {
@@ -26,8 +27,27 @@ function base64UrlDecode(s) {
 
 // https://stackoverflow.com/a/31976060/404271
 function makePathNameSafe(name) {
-    // return name.replace(/[/<>:"/\\|?*\x00-\x1f]/g, '_');
-    return name.replace(/[<>:"/\\|?*]/g, '_');
+    return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_');
 }
 
-export { Commands, getTailAfter, base64UrlDecode, makePathNameSafe }
+function dashify(s) {
+    return s.replace(/[^a-zA-Z0-9]/g, '-');
+}
+
+function delayMs(ms) {
+    return new Promise(res => setTimeout(res, ms))
+}
+
+async function delayMsWithRatio(ms, ratio) {
+    await delayMs(ms * (1 - ratio + 2 * ratio * Math.random()))
+}
+
+async function delayRoughlyMs(ms) {
+    await delayMsWithRatio(ms, 0.4)
+}
+
+export {
+    Commands,
+    getTailAfter, base64UrlDecode, makePathNameSafe, dashify,
+    delayMs, delayMsWithRatio, delayRoughlyMs
+}

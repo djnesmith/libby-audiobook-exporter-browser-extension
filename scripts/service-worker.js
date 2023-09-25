@@ -1,4 +1,4 @@
-import { Commands, base64UrlDecode, makePathNameSafe } from './common.js'
+import { Commands, getTailAfter, base64UrlDecode, makePathNameSafe, delayRoughlyMs } from './common.js'
 
 // globals
 // { titleId: {
@@ -26,27 +26,68 @@ async function iframeCallback(details) {
     const openbookResponse = await fetch(openbookUrl)
     const openbook = await openbookResponse.json()
 
-    const info = {}
-    books[titleId] = info
-    info.titleId = titleId
-    info.title = openbook?.title?.main
-    info.subtitle = openbook?.title?.subtitle
-    info.downloadDir = makePathNameSafe(info.title)
-    info.authors = openbook?.creator
-    info.openbookUrl = openbookUrl
-    info.coverUrl = mObj?.tdata?.codex?.title?.cover?.imageURL
+    const book = {}
+    books[titleId] = book
+    book.openbook = openbook
+    book.titleId = titleId
+    book.title = openbook?.title?.main
+    book.subtitle = openbook?.title?.subtitle
+    book.downloadDir = makePathNameSafe(book.title)
+    book.authors = openbook?.creator
+    book.openbookUrl = openbookUrl
+    book.coverUrl = mObj?.tdata?.codex?.title?.cover?.imageURL
+    book.metaFiles = {}
+    book.metaFiles['openbook.json'] = { url: openbookUrl, downloaded: false }
+    const coverFilename = `cover.${getTailAfter(book.coverUrl, '.')?.toLowerCase() ?? 'jpg'}`
+    book.metaFiles[coverFilename] = { url: book.coverUrl, downloaded: false }
     const mp3Urls = openbook?.spine.map(
         x => `${baseUrl}/${x.path}`
     )
-    info.audios = {}
+    book.audios = {}
     mp3Urls.forEach(
         (mp3Url, i) => {
             const match = mp3Url.match(/-[P|p]art\d*\..*?\?/)
             const suffix = match?.[0]?.slice(0, -1) ?? ("-Part" + (i > 9 ? i : "0" + i) + ".mp3")
-            const filename = `${info.downloadDir}${suffix}`
-            info.audios[filename] = mp3Url
+            const filename = `${book.downloadDir}${suffix}`
+            book.audios[filename] = { url: mp3Url, downloaded: false }
         }
     )
+    book.downloading = false
+}
+
+async function download(titleId) {
+    if (!books || !books[titleId]) {
+        return null
+    }
+
+    const book = books[titleId]
+    if (book.downloading) {
+        return book
+    }
+
+    book.downloading = true
+    console.log(`[lae] start downloading "${book?.title}".`)
+    await downloadFiles(book.metaFiles, book)
+    await downloadFiles(book.audios, book)
+    console.log(`[lae] finish downloading "${book?.title}".`)
+    book.downloading = false
+    Object.keys(book.metaFiles).forEach(filename => book.metaFiles[filename].downloaded = false)
+    Object.keys(book.audios).forEach(filename => book.audios[filename].downloaded = false)
+    return book
+}
+
+async function downloadFiles(files, book) {
+    for await (const filename of Object.keys(files)) {
+        const fileInfo = files[filename];
+        console.log(`[lae] downloading ${fileInfo.url} as ${filename}`)
+        await chrome.downloads.download({
+            url: fileInfo.url,
+            filename: `${book.downloadDir}/${filename}`,
+        })
+        await delayRoughlyMs(5000)
+        fileInfo.downloaded = true
+        chrome.runtime.sendMessage({ command: Commands.UpdateBook, book: book })
+    }
 }
 
 async function main() {
@@ -56,17 +97,12 @@ async function main() {
     chrome.runtime.onMessage.addListener(
         async (message, sender, sendResponse) => {
             switch (message?.command) {
-                case Commands.GetMap:
-                    sendResponse(books[message?.titleId]);
+                case Commands.GetBook:
+                    sendResponse(books[message.titleId]);
                     break;
                 case Commands.Download: {
-                    const downloadId = await chrome.downloads.download({
-                        url: message?.url,
-                        filename: message?.filename,
-                    })
-                    sendResponse({
-                        downloadId: downloadId,
-                    })
+                    const book = download(message.titleId)
+                    sendResponse(book)
                     break;
                 }
                 default: {

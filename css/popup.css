@@ -28,17 +28,17 @@ body {
 }
 
 /* https://stackoverflow.com/a/53778525/404271 */
-#lae-download-list ul {
+#lae-download-list {
     display: contents;
     list-style: none;
 }
 
-#lae-download-list ul li {
+#lae-download-list li {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
 
-#lae-download-list ul li:nth-child(even) {
+#lae-download-list li:nth-child(even) {
     background-color: lightgray;
 }
 
