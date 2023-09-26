@@ -139,22 +139,22 @@ function commListener(port) {
     )
 }
 
-function installedListener(details) {
-    if (details.reason === "install") {
-        console.log("This is a first install!")
-    } else if (details.reason === "update") {
-        const thisVersion = chrome.runtime.getManifest().version
-        console.log("Updated from " + details.previousVersion + " to " + thisVersion + "!")
-    }
-}
-
 async function main() {
     await loadBookFromStorage()
     removeExpiredBooks()
     const iframeFilter = { urls: ["*://*.libbyapp.com/?m=eyJ*"] }
     chrome.webRequest.onCompleted.addListener(iframeCallback, iframeFilter);
     chrome.runtime.onConnect.addListener(commListener)
-    chrome.runtime.onInstalled.addListener(installedListener)
 }
 
+// https://stackoverflow.com/a/56405005/404271
+// https://developer.chrome.com/docs/extensions/mv2/background_pages/#listeners
+//   Listeners must be registered synchronously from the start of the page.
+//   Do not register listeners asynchronously, as they will not be properly triggered.
+function installedListener(details) {
+    if (details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
+        chrome.tabs.create({ url: "update.html" })
+    }
+}
+chrome.runtime.onInstalled.addListener(installedListener)
 main()
