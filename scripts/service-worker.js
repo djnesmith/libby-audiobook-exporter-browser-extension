@@ -13,15 +13,17 @@ import { Commands, getTailAfter, base64UrlDecode, makePathNameSafe, delayRoughly
 //     }
 //   }
 // }
-let books
+let books = {}
 let commPort = null
 
 async function loadBookFromStorage() {
-    books = await chrome.storage.local.get('books')
-    if (!books) {
-        books = {}
+    const localBooks = await chrome.storage.local.get('books')
+    if (localBooks) {
+        books = localBooks.books
     }
+}
 
+function removeExpiredBooks() {
     Object.keys(books).forEach(
         titleId => {
             // `expires` is in seconds, but `Date.now()` in milliseconds
@@ -150,6 +152,7 @@ function installedListener(details) {
 
 async function main() {
     await loadBookFromStorage()
+    removeExpiredBooks()
     const iframeFilter = { urls: ["*://*.libbyapp.com/?m=eyJ*"] }
     chrome.webRequest.onCompleted.addListener(iframeCallback, iframeFilter);
     chrome.runtime.onConnect.addListener(commListener)
