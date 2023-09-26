@@ -5,7 +5,7 @@ const Commands = {
 }
 
 function getTailAfter(str, sep) {
-    return str.substring(str.lastIndexOf(sep) + 1)
+    return str?.substring(str?.lastIndexOf(sep) + 1)
 }
 
 // https://stackoverflow.com/a/51838635/404271

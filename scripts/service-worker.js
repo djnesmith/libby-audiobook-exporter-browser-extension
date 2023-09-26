@@ -14,6 +14,7 @@ import { Commands, getTailAfter, base64UrlDecode, makePathNameSafe, delayRoughly
 //   }
 // }
 let books
+let commPort = null
 
 async function iframeCallback(details) {
     const url = new URL(details.url)
@@ -90,7 +91,9 @@ async function downloadFiles(files, book) {
         })
         await delayRoughlyMs(5000)
         fileInfo.downloaded = true
-        chrome.runtime.sendMessage({ command: Commands.UpdateBook, book: book })
+        if (commPort) {
+            commPort.postMessage({ command: Commands.UpdateBook, book: book })
+        }
     }
 }
 
@@ -99,6 +102,7 @@ async function main() {
     if (!books) {
         books = {}
     }
+
     Object.keys(books).forEach(
         titleId => {
             // `expires` is in seconds, but `Date.now()` in milliseconds
@@ -111,35 +115,42 @@ async function main() {
     const iframeFilter = { urls: ["*://*.libbyapp.com/?m=eyJ*"] }
     chrome.webRequest.onCompleted.addListener(iframeCallback, iframeFilter);
 
-    chrome.runtime.onMessage.addListener(
-        async (message, sender, sendResponse) => {
-            switch (message?.command) {
-                case Commands.GetBook:
-                    sendResponse(books[message.titleId]);
-                    break;
-                case Commands.Download: {
-                    const book = download(message.titleId)
-                    sendResponse(book)
-                    break;
+    chrome.runtime.onConnect.addListener(
+        port => {
+            commPort = port
+
+            port.onMessage.addListener(
+                message => {
+                    switch (message?.command) {
+                        case Commands.GetBook:
+                            port.postMessage({
+                                command: Commands.UpdateBook,
+                                book: books[message.titleId]
+                            })
+                            break;
+                        case Commands.Download:
+                            download(message.titleId)
+                            break;
+                        default:
+                            console.error(`Message not understood: ${message}`)
+                    }
                 }
-                default: {
-                    const error = `Message not understood: ${message}`;
-                    sendResponse({
-                        error: error,
-                    })
-                }
+            )
+
+            port.onDisconnect.addListener(() => commPort = null)
+        }
+    )
+
+    chrome.runtime.onInstalled.addListener(
+        details => {
+            if (details.reason == "install") {
+                console.log("This is a first install!");
+            } else if (details.reason == "update") {
+                const thisVersion = chrome.runtime.getManifest().version;
+                console.log("Updated from " + details.previousVersion + " to " + thisVersion + "!");
             }
         }
-    );
-
-    chrome.runtime.onInstalled.addListener(function (details) {
-        if (details.reason == "install") {
-            console.log("This is a first install!");
-        } else if (details.reason == "update") {
-            var thisVersion = chrome.runtime.getManifest().version;
-            console.log("Updated from " + details.previousVersion + " to " + thisVersion + "!");
-        }
-    });
+    )
 }
 
 main()

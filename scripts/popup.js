@@ -2,6 +2,7 @@ import { Commands, getTailAfter, dashify } from "./common.js"
 
 // globals
 let book
+let commPort
 
 // const
 const LAE_EXPLANATION_BANNER = "lae-explanation-banner"
@@ -17,6 +18,10 @@ const laeExportButton = document.getElementById(EXPORT_BUTTON_ID);
 const laeStatusDiv = document.getElementById(STATUS_ID)
 
 function renderDownloadList() {
+    if (!book) {
+        return
+    }
+
     laeExportButton.disabled = book.downloading
     const allFiles = { ...book.metaFiles, ...book.audios }
     Object.keys(allFiles).forEach(
@@ -30,7 +35,7 @@ function renderDownloadList() {
 }
 
 async function exportAudio() {
-    await chrome.runtime.sendMessage({
+    await commPort.postMessage({
         command: Commands.Download,
         titleId: book.titleId
     })
@@ -62,8 +67,20 @@ function updateStatus(text) {
 }
 
 async function main() {
-    chrome.runtime.onMessage.addListener(
-        async (message, sender, sendResponse) => {
+    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    const titleId = getTailAfter(activeTab?.url, '/')
+    if (!titleId) {
+        return
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        laeExportButton.addEventListener('click', exportAudio);
+    });
+
+    // there can only be one pop up, so I think this should be OK to not pass name
+    commPort = chrome.runtime.connect()
+    commPort.onMessage.addListener(
+        message => {
             switch (message?.command) {
                 case Commands.UpdateBook:
                     book = message.book
@@ -73,16 +90,10 @@ async function main() {
         }
     )
 
-    document.addEventListener('DOMContentLoaded', function () {
-        laeExportButton.addEventListener('click', exportAudio);
+    commPort.postMessage({
+        command: Commands.GetBook,
+        titleId: titleId
     });
-
-    const activeTab = await chrome.tabs.query({ active: true, currentWindow: true })
-    const titleId = getTailAfter(activeTab[0].url, '/')
-    book = await chrome.runtime.sendMessage({ command: Commands.GetBook, titleId: titleId });
-    if (book?.openbookUrl) {
-        renderDownloadList();
-    }
 }
 
 main()
