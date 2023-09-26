@@ -30,7 +30,8 @@
   "permissions": [
     "webRequest",
     "downloads",
-    "activeTab"
+    "activeTab",
+    "storage"
   ],
   "host_permissions": [
     "*://*.libbyapp.com/*"

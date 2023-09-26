@@ -13,7 +13,7 @@ import { Commands, getTailAfter, base64UrlDecode, makePathNameSafe, delayRoughly
 //     }
 //   }
 // }
-const books = {}
+let books
 
 async function iframeCallback(details) {
     const url = new URL(details.url)
@@ -22,14 +22,17 @@ async function iframeCallback(details) {
     const m = base64UrlDecode(encodedM)
     const mObj = JSON.parse(m)
     const titleId = mObj?.tdata?.codex?.title?.titleId
+    // the `parseInt()` is superfluous, but just to be safe
+    const expires = parseInt(mObj.expires)
     const openbookUrl = `${baseUrl}/_d/openbook.json`
     const openbookResponse = await fetch(openbookUrl)
     const openbook = await openbookResponse.json()
 
     const book = {}
     books[titleId] = book
-    book.openbook = openbook
     book.titleId = titleId
+    book.expires = expires
+    book.openbook = openbook
     book.title = openbook?.title?.main
     book.subtitle = openbook?.title?.subtitle
     book.downloadDir = makePathNameSafe(book.title)
@@ -53,10 +56,11 @@ async function iframeCallback(details) {
         }
     )
     book.downloading = false
+    chrome.storage.local.set({ books: books })
 }
 
 async function download(titleId) {
-    if (!books || !books[titleId]) {
+    if (!books?.[titleId]) {
         return null
     }
 
@@ -91,6 +95,19 @@ async function downloadFiles(files, book) {
 }
 
 async function main() {
+    books = await chrome.storage.local.get('books')
+    if (!books) {
+        books = {}
+    }
+    Object.keys(books).forEach(
+        titleId => {
+            // `expires` is in seconds, but `Date.now()` in milliseconds
+            if (books[titleId]?.expires * 1000 < Date.now()) {
+                delete books[titleId]
+            }
+        }
+    )
+
     const iframeFilter = { urls: ["*://*.libbyapp.com/?m=eyJ*"] }
     chrome.webRequest.onCompleted.addListener(iframeCallback, iframeFilter);
 
