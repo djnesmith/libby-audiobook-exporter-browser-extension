@@ -18,9 +18,7 @@ let commPort = null
 
 async function loadBookFromStorage() {
     const localBooks = await chrome.storage.local.get('books')
-    if (localBooks) {
-        books = localBooks.books
-    }
+    books = localBooks?.books ?? {}
 }
 
 function removeExpiredBooks() {
