@@ -5,13 +5,13 @@ let book
 let commPort
 
 // const
-const LAE_EXPLANATION_BANNER = "lae-explanation-banner"
+const LAE_EXPLANATION_BANNER_ID = "lae-explanation-banner"
 const LAE_MAIN_ID = "lae-main"
 const EXPORT_BUTTON_ID = "lae-export-button"
 const DOWNLOAD_LIST_ID = "lae-download-list"
 const STATUS_ID = "lae-status"
 
-const laeExplanationBanner = document.getElementById(LAE_EXPLANATION_BANNER);
+const laeExplanationBanner = document.getElementById(LAE_EXPLANATION_BANNER_ID);
 const laeMain = document.getElementById(LAE_MAIN_ID);
 const laeDownloadList = document.getElementById(DOWNLOAD_LIST_ID);
 const laeExportButton = document.getElementById(EXPORT_BUTTON_ID);
@@ -82,6 +82,7 @@ function exportAudio() {
 }
 
 async function main() {
+    laeExportButton.addEventListener('click', exportAudio);
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
     const titleId = getTailAfter(activeTab?.url, '/')
     if (!titleId) {
@@ -89,10 +90,6 @@ async function main() {
     }
 
     setupComm()
-    document.addEventListener('DOMContentLoaded', function () {
-        laeExportButton.addEventListener('click', exportAudio);
-    });
-
     commPort.postMessage({
         command: Commands.GetBook,
         titleId: titleId

@@ -20,7 +20,8 @@
       ],
       "matches": [
         "*://*.libbyapp.com/open/loan/*"
-      ]
+      ],
+      "run_at": "document_end"
     }
   ],
   "action": {
