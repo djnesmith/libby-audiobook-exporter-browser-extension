@@ -5,7 +5,7 @@ async function main() {
     chrome.storage.local.get(console.log)
     const notified = await chrome.storage.local.get('lae_update_notified')
     if (Date.now() < ENDING_DATE.getTime() && !notified?.lae_update_notified) {
-        const noticeHtml = `Libby Audio Extractor now uses popup (just click the extension icon) instead of inserting elements to the page. (Click to permanently dismiss this notice)`
+        const noticeHtml = `Libby Audio Extporter now uses popup (just click the extension icon) instead of inserting elements to the page. (Click to permanently dismiss this notice)`
         const noticeDiv = document.createElement("div");
         noticeDiv.id = LAE_UPDATE_NOTICE_ID
         noticeDiv.innerHTML = noticeHtml
