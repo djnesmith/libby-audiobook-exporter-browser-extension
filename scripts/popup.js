@@ -17,6 +17,21 @@ const laeDownloadList = document.getElementById(DOWNLOAD_LIST_ID);
 const laeExportButton = document.getElementById(EXPORT_BUTTON_ID);
 const laeStatusDiv = document.getElementById(STATUS_ID)
 
+function setupComm() {
+    // there can only be one pop up, so I think this should be OK to not pass name
+    commPort = chrome.runtime.connect()
+    commPort.onMessage.addListener(
+        message => {
+            switch (message?.command) {
+                case Commands.UpdateBook:
+                    book = message.book
+                    renderDownloadList()
+                    break
+            }
+        }
+    )
+}
+
 function renderDownloadList() {
     if (!book) {
         return
@@ -32,13 +47,6 @@ function renderDownloadList() {
     const total = Object.keys(allFiles).length
     const downloadedCount = Object.keys(allFiles).filter(filename => allFiles[filename].downloaded).length
     updateStatus(downloadedCount === 0 ? '' : `Downloading: ${downloadedCount}/${total}`)
-}
-
-async function exportAudio() {
-    await commPort.postMessage({
-        command: Commands.Download,
-        titleId: book.titleId
-    })
 }
 
 function upsertDownloadListItem(filename, urlInfo) {
@@ -66,6 +74,13 @@ function updateStatus(text) {
     laeStatusDiv.innerText = text
 }
 
+function exportAudio() {
+    commPort.postMessage({
+        command: Commands.Download,
+        titleId: book.titleId
+    })
+}
+
 async function main() {
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
     const titleId = getTailAfter(activeTab?.url, '/')
@@ -73,22 +88,10 @@ async function main() {
         return
     }
 
+    setupComm()
     document.addEventListener('DOMContentLoaded', function () {
         laeExportButton.addEventListener('click', exportAudio);
     });
-
-    // there can only be one pop up, so I think this should be OK to not pass name
-    commPort = chrome.runtime.connect()
-    commPort.onMessage.addListener(
-        message => {
-            switch (message?.command) {
-                case Commands.UpdateBook:
-                    book = message.book
-                    renderDownloadList()
-                    break;
-            }
-        }
-    )
 
     commPort.postMessage({
         command: Commands.GetBook,

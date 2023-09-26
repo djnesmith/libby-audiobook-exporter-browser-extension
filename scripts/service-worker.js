@@ -16,6 +16,22 @@ import { Commands, getTailAfter, base64UrlDecode, makePathNameSafe, delayRoughly
 let books
 let commPort = null
 
+async function loadBookFromStorage() {
+    books = await chrome.storage.local.get('books')
+    if (!books) {
+        books = {}
+    }
+
+    Object.keys(books).forEach(
+        titleId => {
+            // `expires` is in seconds, but `Date.now()` in milliseconds
+            if (books[titleId]?.expires * 1000 < Date.now()) {
+                delete books[titleId]
+            }
+        }
+    )
+}
+
 async function iframeCallback(details) {
     const url = new URL(details.url)
     const baseUrl = url.origin
@@ -97,60 +113,47 @@ async function downloadFiles(files, book) {
     }
 }
 
-async function main() {
-    books = await chrome.storage.local.get('books')
-    if (!books) {
-        books = {}
-    }
+function commListener(port) {
+    commPort = port
 
-    Object.keys(books).forEach(
-        titleId => {
-            // `expires` is in seconds, but `Date.now()` in milliseconds
-            if (books[titleId]?.expires * 1000 < Date.now()) {
-                delete books[titleId]
+    port.onMessage.addListener(
+        message => {
+            switch (message?.command) {
+                case Commands.GetBook:
+                    port.postMessage({
+                        command: Commands.UpdateBook,
+                        book: books[message.titleId]
+                    })
+                    break;
+                case Commands.Download:
+                    download(message.titleId)
+                    break;
+                default:
+                    console.error(`Message not understood: ${message}`)
             }
         }
     )
 
+    port.onDisconnect.addListener(
+        () => commPort = null
+    )
+}
+
+function installedListener(details) {
+    if (details.reason === "install") {
+        console.log("This is a first install!")
+    } else if (details.reason === "update") {
+        const thisVersion = chrome.runtime.getManifest().version
+        console.log("Updated from " + details.previousVersion + " to " + thisVersion + "!")
+    }
+}
+
+async function main() {
+    await loadBookFromStorage()
     const iframeFilter = { urls: ["*://*.libbyapp.com/?m=eyJ*"] }
     chrome.webRequest.onCompleted.addListener(iframeCallback, iframeFilter);
-
-    chrome.runtime.onConnect.addListener(
-        port => {
-            commPort = port
-
-            port.onMessage.addListener(
-                message => {
-                    switch (message?.command) {
-                        case Commands.GetBook:
-                            port.postMessage({
-                                command: Commands.UpdateBook,
-                                book: books[message.titleId]
-                            })
-                            break;
-                        case Commands.Download:
-                            download(message.titleId)
-                            break;
-                        default:
-                            console.error(`Message not understood: ${message}`)
-                    }
-                }
-            )
-
-            port.onDisconnect.addListener(() => commPort = null)
-        }
-    )
-
-    chrome.runtime.onInstalled.addListener(
-        details => {
-            if (details.reason == "install") {
-                console.log("This is a first install!");
-            } else if (details.reason == "update") {
-                const thisVersion = chrome.runtime.getManifest().version;
-                console.log("Updated from " + details.previousVersion + " to " + thisVersion + "!");
-            }
-        }
-    )
+    chrome.runtime.onConnect.addListener(commListener)
+    chrome.runtime.onInstalled.addListener(installedListener)
 }
 
 main()
